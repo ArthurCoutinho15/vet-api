@@ -14,3 +14,5 @@ class TutorModel(settings.DBBaseModel):
     email = Column(String(200), unique=True, nullable=False)
     phone = Column(String(20), nullable=True)
     address = Column(String(300), nullable=True)
+    
+    animals = relationship("AnimalModel", back_populates="tutor")

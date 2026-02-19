@@ -5,9 +5,13 @@ from fastapi import APIRouter, status, HTTPException, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from src.models.__tutor_model import TutorModel
-from src.schemas.tutors_schema import TutorsSchema
+from src.models.__animals_model import AnimalModel
+
+from src.schemas.tutors_schema import TutorsSchema, TutorWithAnimals
+from src.schemas.animals_schema import AnimalsSchemaTutors
 
 from src.core.deps import get_session
 
@@ -104,7 +108,23 @@ async def delete_tutor(tutor_id: int, db: AsyncSession = Depends(get_session)):
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
             raise HTTPException(detail="Tutor not found.", status_code=status.HTTP_404_NOT_FOUND)
-        
-        
-# TODO 
-# Fazer endpoint para pegar animais
+             
+
+@router.get("/{id}/animals", response_model=TutorWithAnimals)
+async def get_tutor_with_animals(
+    tutor_id: int,
+    db: AsyncSession = Depends(get_session)
+):
+    query = (
+        select(TutorModel)
+        .options(selectinload(TutorModel.animals))
+        .where(TutorModel.id == tutor_id)
+    )
+
+    result = await db.execute(query)
+    tutor = result.scalars().one_or_none()
+
+    if not tutor:
+        raise HTTPException(404, "Tutor not found")
+
+    return tutor

@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+from src.schemas.animals_schema import AnimalOut
 class TutorsSchema(BaseModel):
     id: Optional[int] = None
     name: str 
@@ -11,5 +12,19 @@ class TutorsSchema(BaseModel):
     address: str
     created_at: datetime = datetime.now()
     
+    class Config:
+        orm_mode = True
+        
+
+class TutorWithAnimals(BaseModel):
+    id: int
+    name: str
+    cpf: str
+    email: str
+    phone: str
+    address: str
+
+    animals: List[AnimalOut] = []
+
     class Config:
         orm_mode = True
