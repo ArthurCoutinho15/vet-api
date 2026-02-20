@@ -13,9 +13,22 @@ class AppointmentSchema(BaseModel):
     id: Optional[int] = None
     animal_id: int
     vet_id: int 
-    scheduled_at: datetime
+    scheduled_at: datetime = datetime.now()
     reason: str 
     status: AppointmentStatusEnum = "scheduled"
     notes: str 
     created_by: int 
     created_at: datetime = datetime.now()
+    
+    class Config:
+        orm_mode = True
+
+class AppointmentCreateSchema(BaseModel):
+    animal_id: int
+    vet_id: int 
+    reason: str 
+    notes: str 
+    created_by: int 
+    
+    class Config:
+        orm_mode = True

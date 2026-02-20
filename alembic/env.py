@@ -18,6 +18,7 @@ from src.core.configs import settings
 from src.models.__tutor_model import TutorModel
 from src.models.__user_model import UserModel
 from src.models.__animals_model import AnimalModel
+from src.models.__appointments_model import AppointmentsModel
 
 config = context.config
 
