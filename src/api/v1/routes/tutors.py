@@ -84,36 +84,38 @@ async def put_tutor(
                 tutor_up.phone = tutor.phone
             if tutor.address:
                 tutor_up.address = tutor.address
-                
+
             await session.commit()
-            
+
             return tutor_up
         else:
             raise HTTPException(
                 detail="Tutor not found.", status_code=status.HTTP_404_NOT_FOUND
             )
 
+
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tutor(tutor_id: int, db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(TutorModel).filter(TutorModel.id == tutor_id)
         result = await session.execute(query)
-        
+
         tutor_del: TutorModel = result.scalars().unique().one_or_none()
-        
+
         if tutor_del:
             await session.delete(tutor_del)
             await session.commit()
-            
+
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         else:
-            raise HTTPException(detail="Tutor not found.", status_code=status.HTTP_404_NOT_FOUND)
-             
+            raise HTTPException(
+                detail="Tutor not found.", status_code=status.HTTP_404_NOT_FOUND
+            )
+
 
 @router.get("/{id}/animals", response_model=TutorWithAnimals)
 async def get_tutor_with_animals(
-    tutor_id: int,
-    db: AsyncSession = Depends(get_session)
+    tutor_id: int, db: AsyncSession = Depends(get_session)
 ):
     query = (
         select(TutorModel)

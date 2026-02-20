@@ -20,4 +20,4 @@ class UserModel(settings.DBBaseModel):
     password = Column(String(256), nullable=False)
     role = Column(Enum(UserRoleEnum), nullable=False)
     is_active = Column(Boolean(), default=True)
-    creted_at = Column(DateTime, default=datetime.now())
+    created_at = Column(DateTime, default=datetime.now())
