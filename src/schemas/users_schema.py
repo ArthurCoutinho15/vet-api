@@ -10,15 +10,18 @@ class RoleEnum(str, Enum):
     
 
 class UsersBaseSchema(BaseModel):
-    id: Optional[int] = None
+    id: int
     name: str
     email: EmailStr
-    role: RoleEnum 
-    is_active: bool = True
+    role: RoleEnum
+    is_active: bool
     created_at: datetime = datetime.now()
-    
+
     class Config:
         orm_mode = True
         
-class UserCreateSchema(UsersBaseSchema):
-    hashed_password: str
+class UserCreateSchema(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: RoleEnum
