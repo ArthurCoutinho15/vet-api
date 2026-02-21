@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from src.api.v1.routes import tutors, animals, users, appointments
+from src.api.v1.routes import tutors, animals, users, appointments, medical_records
 
 api_router = APIRouter()
 
@@ -10,3 +10,4 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(
     appointments.router, prefix="/appointments", tags=["appointments"]
 )
+api_router.include_router(medical_records.router, prefix="/medical-records", tags=["medical records"])

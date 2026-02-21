@@ -49,3 +49,9 @@ class AppointmentsModel(settings.DBBaseModel):
     creator = relationship(
         "UserModel", foreign_keys=[created_by], back_populates="created_appointments"
     )
+
+    medical_record = relationship(
+        "MedicalRecordsModel", 
+        back_populates="appointment", 
+        uselist=False # 1:1
+    )

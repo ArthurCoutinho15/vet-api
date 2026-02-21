@@ -34,3 +34,4 @@ class UserModel(settings.DBBaseModel):
         back_populates="creator",
         foreign_keys="AppointmentsModel.created_by",
     )
+    medical_records = relationship("MedicalRecordsModel")
