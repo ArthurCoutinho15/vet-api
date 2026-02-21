@@ -19,6 +19,7 @@ from src.models.__tutor_model import TutorModel
 from src.models.__user_model import UserModel
 from src.models.__animals_model import AnimalModel
 from src.models.__appointments_model import AppointmentsModel
+from src.models.__medical_records_model import MedicalRecordsModel
 
 config = context.config
 
