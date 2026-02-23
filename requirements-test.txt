@@ -4,7 +4,9 @@ pytest
 pytest-asyncio
 sqlalchemy
 aiosqlite
-pydantic
+aiomysql
+pymysql
+pydantic[email]
 pydantic-settings
 python-dotenv
 uvicorn
