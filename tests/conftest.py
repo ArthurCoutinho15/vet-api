@@ -4,7 +4,7 @@ import os
 sys.path.append(os.getcwd())
 sys.path.append(os.path.abspath("."))
 
-import asyncio 
+import pytest
 import pytest_asyncio 
 
 from httpx import AsyncClient, ASGITransport
@@ -32,6 +32,7 @@ async def create_db():
     yield
     async with engine_test.begin() as conn:
         await conn.run_sync(settings.DBBaseModel.metadata.drop_all)
+    await engine_test.dispose()
 
 async def override_get_session():
     async with TestingSessionlocal() as session:
@@ -50,3 +51,4 @@ async def client(create_db):
         yield ac
 
     app.dependency_overrides.clear()
+    
