@@ -14,7 +14,16 @@ class TutorsSchema(BaseModel):
     
     class Config:
         orm_mode = True
-        
+
+class TutorUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    cpf: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    
+    class Config:
+        orm_mode = True
 
 class TutorWithAnimals(BaseModel):
     id: int

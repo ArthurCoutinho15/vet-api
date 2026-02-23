@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from src.models.__tutor_model import TutorModel
 from src.models.__animals_model import AnimalModel
 
-from src.schemas.tutors_schema import TutorsSchema, TutorWithAnimals
+from src.schemas.tutors_schema import TutorsSchema, TutorWithAnimals, TutorUpdateSchema
 from src.schemas.animals_schema import AnimalsSchemaTutors
 
 from src.core.deps import get_session
@@ -47,7 +47,7 @@ async def get_tutors(db: AsyncSession = Depends(get_session)):
         return tutors
 
 
-@router.get("/{id}", status_code=status.HTTP_200_OK, response_model=TutorsSchema)
+@router.get("/{tutor_id}", status_code=status.HTTP_200_OK, response_model=TutorsSchema)
 async def get_tutor(tutor_id: int, db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(TutorModel).filter(TutorModel.id == tutor_id)
@@ -63,9 +63,9 @@ async def get_tutor(tutor_id: int, db: AsyncSession = Depends(get_session)):
             )
 
 
-@router.put("/{id}", response_model=TutorsSchema, status_code=status.HTTP_202_ACCEPTED)
+@router.put("/{tutor_id}", response_model=TutorUpdateSchema, status_code=status.HTTP_202_ACCEPTED)
 async def put_tutor(
-    tutor_id: int, tutor: TutorsSchema, db: AsyncSession = Depends(get_session)
+    tutor_id: int, tutor: TutorUpdateSchema, db: AsyncSession = Depends(get_session)
 ):
     async with db as session:
         query = select(TutorModel).filter(TutorModel.id == tutor_id)
@@ -94,7 +94,7 @@ async def put_tutor(
             )
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{tutor_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tutor(tutor_id: int, db: AsyncSession = Depends(get_session)):
     async with db as session:
         query = select(TutorModel).filter(TutorModel.id == tutor_id)
