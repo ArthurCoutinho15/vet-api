@@ -6,3 +6,4 @@ Para usar o alembic é necessário usar uma url sync
 . alembic revision --autogenerate -m "initial tables"
 . alembic upgrade head
 . fastapi: Executar -> uvicorn src.main:app --reload
+. pytest: pytest -v

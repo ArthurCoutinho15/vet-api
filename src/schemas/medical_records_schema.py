@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, Json
 from datetime import datetime, date
 from enum import Enum
 
-class Prescription(BaseModel):
+class PrescriptionSchema(BaseModel):
     medicine: str 
     dosage: str 
     frequency: str 
@@ -15,10 +15,22 @@ class MedicalRecordSchema(BaseModel):
     vet_id: int
     diagnosis: str
     treatment: str
-    prescriptions: Optional[List[Prescription]]
+    prescriptions: Optional[List[PrescriptionSchema]]
     follow_up_date: Optional[date]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
     class Config:
         orm_mode = True
+        
+        
+class MedicalRecordHistorySchema(BaseModel):
+    id: int
+    diagnosis: str
+    treatment: str | None = None
+    prescriptions: list[PrescriptionSchema] = []
+    follow_up_date: date | None = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
