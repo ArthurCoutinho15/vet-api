@@ -3,6 +3,8 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime, date
 from enum import Enum
 
+from src.schemas.medical_records_schema import MedicalRecordHistorySchema
+
 class AppointmentStatusEnum(str, Enum):
     scheduled = "scheduled"
     in_progress = "in progress"
@@ -32,3 +34,14 @@ class AppointmentCreateSchema(BaseModel):
     
     class Config:
         orm_mode = True
+        
+class AppointmentHistorySchema(BaseModel):
+    id: int
+    scheduled_at: datetime
+    status: str
+    reason: str | None = None
+    notes: str | None = None
+    medical_record: MedicalRecordHistorySchema | None = None
+
+    class Config:
+        from_attributes = True

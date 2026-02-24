@@ -5,12 +5,15 @@ from fastapi import APIRouter, status, HTTPException, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from src.models.__tutor_model import TutorModel
+from src.models.__appointments_model import AppointmentsModel
+from src.models.__medical_records_model import MedicalRecordsModel
 from src.models.__animals_model import AnimalModel
 
 from src.schemas.tutors_schema import TutorsSchema
-from src.schemas.animals_schema import AnimalsSchema, AnimalsSchemaTutors
+from src.schemas.animals_schema import AnimalsSchema, AnimalsSchemaTutors, AnimalHistorySchema
 
 from src.core.deps import get_session
 
@@ -120,3 +123,22 @@ async def delete_animal(animal_id: int, db: AsyncSession = Depends(get_session))
 
 
 # TODO Histórico médico do animal
+@router.get("/{id}/history", status_code=status.HTTP_200_OK, response_model=AnimalHistorySchema)
+async def get_animal_history(id: int, db: AsyncSession = Depends(get_session)):
+    stmt = (
+        select(AnimalModel)
+        .where(AnimalModel.id == id)
+        .options(
+            selectinload(AnimalModel.appointments)
+            .selectinload(AppointmentsModel.medical_record)
+        )
+    )
+    
+    result = await db.execute(stmt)
+    animal = result.scalars().first()
+    
+    if not animal:
+        raise HTTPException(status_code=404, detail="Animal not found")
+    
+    return animal
+        
