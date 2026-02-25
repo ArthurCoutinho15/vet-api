@@ -1,6 +1,8 @@
 from typing import List, Optional, Any
 
 from fastapi import APIRouter, status, HTTPException, Depends, Response
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -11,11 +13,30 @@ from src.models.__user_model import UserModel
 
 from src.schemas.users_schema import UserCreateSchema, UsersBaseSchema
 
-from src.core.deps import get_session
+from src.core.deps import get_session, get_current_user
 from src.utils.security import security
+from src.utils.auth import authenticate_user, __create_access_token
 
 router = APIRouter()
 
+@router.get("/logged", response_model=UsersBaseSchema)
+def get_logged(logged_user: UserModel = Depends(get_current_user)):
+    return logged_user
+
+@router.post("/login", status_code=status.HTTP_200_OK)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
+    user = await authenticate_user(email=form_data.username, password=form_data.password, db=db)
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dados de acesso incorretos.")
+    
+    return JSONResponse(
+        content={
+            "access_token": __create_access_token(sub=user.id),
+            "token_type": "bearer"
+        },
+        status_code=status.HTTP_200_OK
+    )
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=UsersBaseSchema)
 async def post_users(user: UserCreateSchema, db: AsyncSession = Depends(get_session)):
