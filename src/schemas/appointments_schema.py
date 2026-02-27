@@ -1,9 +1,11 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from enum import Enum
 
 from src.schemas.medical_records_schema import MedicalRecordHistorySchema
+
+
 
 class AppointmentStatusEnum(str, Enum):
     scheduled = "scheduled"
@@ -17,7 +19,7 @@ class AppointmentSchema(BaseModel):
     vet_id: int 
     scheduled_at: datetime = datetime.now()
     reason: str 
-    status: AppointmentStatusEnum = "scheduled"
+    status: AppointmentStatusEnum = AppointmentStatusEnum.scheduled
     notes: str 
     created_by: int 
     created_at: datetime = datetime.now()
@@ -28,12 +30,25 @@ class AppointmentSchema(BaseModel):
 class AppointmentCreateSchema(BaseModel):
     animal_id: int
     vet_id: int 
+    scheduled_at: datetime 
     reason: str 
     notes: str 
     created_by: int 
     
     class Config:
         orm_mode = True
+        
+class AppointmentUpdatechema(BaseModel):
+    animal_id: Optional[int] = None
+    vet_id: Optional[int]  = None
+    scheduled_at: Optional[datetime] = None
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    created_by: Optional[int] = None
+    
+    class Config:
+        orm_mode = True
+        
         
 class AppointmentHistorySchema(BaseModel):
     id: int
