@@ -1,5 +1,7 @@
 from typing import List, Optional, Any
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, status, HTTPException, Depends, Response
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +11,11 @@ from sqlalchemy.orm import selectinload
 
 from src.models.__appointments_model import AppointmentsModel
 
-from src.schemas.appointments_schema import AppointmentSchema, AppointmentCreateSchema
+from src.schemas.appointments_schema import AppointmentSchema, AppointmentCreateSchema, AppointmentUpdatechema
 
-from src.core.deps import get_session
+from src.services.appointments_service import AppointmentsService
+
+from src.core.deps import get_session, get_current_user
 
 router = APIRouter()
 
@@ -20,101 +24,58 @@ router = APIRouter()
     "/", status_code=status.HTTP_201_CREATED, response_model=AppointmentCreateSchema
 )
 async def post_appointment(
-    appointment: AppointmentCreateSchema, db: AsyncSession = Depends(get_session)
+    appointment: AppointmentCreateSchema, db: AsyncSession = Depends(get_session), user = Depends(get_current_user)
 ):
-    new_appointment: AppointmentsModel = AppointmentsModel(
-        animal_id=appointment.animal_id,
-        vet_id=appointment.vet_id,
-        reason=appointment.reason,
-        notes=appointment.notes,
-        created_by=appointment.created_by,
-    )
-
-    db.add(new_appointment)
-    await db.commit()
+    appointment_service = AppointmentsService(db)
+    new_appointment = await appointment_service.create_appointment(schema=appointment, current_user=user)
+    
 
     return new_appointment
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[AppointmentSchema])
-async def get_appointments(db: AsyncSession = Depends(get_session)):
-    async with db as session:
-        query = select(AppointmentsModel)
-        results = await session.execute(query)
-
-        appointments: List[AppointmentsModel] = results.scalars().unique().all()
-
-        return appointments
+async def get_appointments(db: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+    appointment_service = AppointmentsService(db)
+    
+    appointments = await appointment_service.get_appointments()
+    
+    return appointments
 
 
 @router.get("/{id}", status_code=status.HTTP_200_OK, response_model=AppointmentSchema)
-async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_session)):
-    async with db as session:
-        query = select(AppointmentsModel).filter(AppointmentsModel.id == appointment_id)
-        results = await session.execute(query)
-
-        appointment: AppointmentsModel = results.scalars().unique().one_or_none()
+async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_session), user = Depends(get_current_user)):
+        appointment_service = AppointmentsService(db)
+        
+        appointment = await appointment_service.get_appointment(appointment_id)
 
         return appointment
 
 
 @router.put(
-    "/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=AppointmentSchema
+    "/{appointment_id}", status_code=status.HTTP_202_ACCEPTED, response_model=AppointmentSchema
 )
 async def put_appointment(
     appointment_id: int,
-    appointment: AppointmentCreateSchema,
+    appointment: AppointmentUpdatechema,
     db: AsyncSession = Depends(get_session),
+    user = Depends(get_current_user)
 ):
-    async with db as session:
-        query = select(AppointmentsModel).filter(AppointmentsModel.id == appointment_id)
-        result = await session.execute(query)
+    appointment_service = AppointmentsService(db)
+        
+    appointment = await appointment_service.put_appointment(appointment_id, schema=appointment)
 
-        appointment_up = result.scalars().unique().one_or_none()
-
-        if not appointment_up:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found."
-            )
-
-        if appointment.animal_id:
-            appointment_up.animal_id = appointment.animal_id
-        if appointment.vet_id:
-            appointment_up.vet_id = appointment.vet_id
-        if appointment.reason:
-            appointment_up.reason = appointment.reason
-        if appointment.notes:
-            appointment_up.notes = appointment.notes
-        if appointment.created_by:
-            appointment_up.created_by = appointment.created_by
-
-        await session.commit()
-
-        return appointment_up
+    return appointment
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_appointment(
-    appointment_id: int, db: AsyncSession = Depends(get_session)
+    appointment_id: int, db: AsyncSession = Depends(get_session), user = Depends(get_current_user)
 ):
-    async with db as session:
-        query = select(AppointmentsModel).filter(AppointmentsModel.id == appointment_id)
-        result = await session.execute(query)
+    appointment_service = AppointmentsService(db)
+        
+    appointment = await appointment_service.delete_appointment(appointment_id)
 
-        appointment_del = result.scalars().unique().one_or_none()
-
-        if not appointment_del:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found."
-            )
-
-        await session.delete(appointment_del)
-        await session.commit()
-
-        return Response(
-            content="Appointment Deleted Successfully",
-            status_code=status.HTTP_204_NO_CONTENT,
-        )
+    return appointment
 
 
 # TODO Criar rota para pegar agenda do veterinário por perído

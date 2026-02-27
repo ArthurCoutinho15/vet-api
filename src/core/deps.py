@@ -50,7 +50,6 @@ async def get_current_user(
         token_data: TokenData = TokenData(username=username)
     except JWTError:
         raise credential_exception
-
     
     async with db as session:
         query = select(UserModel).filter(UserModel.id == int(token_data.username))
