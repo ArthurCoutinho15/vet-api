@@ -1,21 +1,18 @@
 from typing import List
 
-from fastapi import APIRouter, status, HTTPException, Depends, Response
+from fastapi import APIRouter, status, Depends
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 
-from src.models.__tutor_model import TutorModel
-from src.models.__appointments_model import AppointmentsModel
-from src.models.__medical_records_model import MedicalRecordsModel
-from src.models.__animals_model import AnimalModel
+from src.schemas.animals_schema import (
+    AnimalsSchema,
+    AnimalsSchemaTutors,
+    AnimalHistorySchema,
+)
 
-from src.schemas.tutors_schema import TutorsSchema
-from src.schemas.animals_schema import AnimalsSchema, AnimalsSchemaTutors, AnimalHistorySchema
+from src.services.animal_service import AnimalsService
 
-from src.core.deps import get_session
+from src.core.deps import get_session, get_current_user
 
 router = APIRouter()
 
@@ -24,121 +21,72 @@ router = APIRouter()
     "/", status_code=status.HTTP_201_CREATED, response_model=AnimalsSchemaTutors
 )
 async def post_animal(
-    animal: AnimalsSchemaTutors, db: AsyncSession = Depends(get_session)
+    animal: AnimalsSchemaTutors,
+    db: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
 ):
-    new_animal: AnimalModel = AnimalModel(
-        name=animal.name,
-        species=animal.species,
-        breed=animal.breed,
-        birth_date=animal.birth_date,
-        weight_kg=animal.weight_kg,
-        tutor_id=animal.tutor_id,
-    )
-
-    db.add(new_animal)
-    await db.commit()
+    animal_service = AnimalsService(db)
+    new_animal = await animal_service.create_animal(animal)
 
     return new_animal
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=list[AnimalsSchema])
-async def get_animals(db: AsyncSession = Depends(get_session)):
-    async with db as session:
-        query = select(AnimalModel)
-        result = await session.execute(query)
+async def get_animals(
+    db: AsyncSession = Depends(get_session), user=Depends(get_current_user)
+):
+    animal_service = AnimalsService(db)
 
-        animals: List[AnimalModel] = result.scalars().unique().all()
-
-        return animals
+    return await animal_service.get_animals()
 
 
-@router.get("/{id}", status_code=status.HTTP_200_OK, response_model=AnimalsSchema)
-async def get_animal(animal_id: int, db: AsyncSession = Depends(get_session)):
-    async with db as session:
-        query = select(AnimalModel).filter(AnimalModel.id == animal_id)
-        result = await session.execute(query)
+@router.get(
+    "/{animal_id}", status_code=status.HTTP_200_OK, response_model=AnimalsSchema
+)
+async def get_animal(
+    animal_id: int,
+    db: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    animal_service = AnimalsService(db)
 
-        animal = result.scalars().unique().one_or_none()
-
-        if not animal:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Animal not found"
-            )
-
-        return animal
+    return await animal_service.get_animal(animal_id)
 
 
 @router.put(
-    "/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=AnimalsSchemaTutors
+    "/{animal_id}",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=AnimalsSchemaTutors,
 )
 async def put_animal(
-    animal_id: int, animal: AnimalsSchemaTutors, db: AsyncSession = Depends(get_session)
+    animal_id: int,
+    animal: AnimalsSchemaTutors,
+    db: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
 ):
-    async with db as session:
-        query = select(AnimalModel).filter(AnimalModel.id == animal_id)
-        result = await session.execute(query)
+    animal_service = AnimalsService(db)
 
-        animal_up: AnimalsSchemaTutors = result.scalars().unique().one_or_none()
-
-        if animal_up:
-            if animal.name:
-                animal_up.name = animal.name
-            if animal.species:
-                animal_up.species = animal.species
-            if animal.breed:
-                animal_up.breed = animal.breed
-            if animal.birth_date:
-                animal_up.birth_date = animal.birth_date
-            if animal.weight_kg:
-                animal_up.weight_kg = animal.weight_kg
-            if animal.tutor_id:
-                animal_up.tutor_id = animal.tutor_id
-
-            await session.commit()
-            return animal_up
-
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Animal not found"
-            )
+    return await animal_service.put_animal(animal_id, animal)
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_animal(animal_id: int, db: AsyncSession = Depends(get_session)):
-    async with db as session:
-        query = select(AnimalModel).filter(AnimalModel.id == animal_id)
-        result = await session.execute(query)
+@router.delete("/{animal_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_animal(
+    animal_id: int,
+    db: AsyncSession = Depends(get_session),
+    user=Depends(get_current_user),
+):
+    animal_service = AnimalsService(db)
 
-        animal_del: AnimalModel = result.scalars().unique().one_or_none()
-
-        if animal_del:
-            await session.delete(animal_del)
-            await session.commit()
-
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Animal not found"
-            )
+    return await animal_service.delete_animal(animal_id)
 
 
-# TODO Histórico médico do animal
-@router.get("/{id}/history", status_code=status.HTTP_200_OK, response_model=AnimalHistorySchema)
-async def get_animal_history(id: int, db: AsyncSession = Depends(get_session)):
-    stmt = (
-        select(AnimalModel)
-        .where(AnimalModel.id == id)
-        .options(
-            selectinload(AnimalModel.appointments)
-            .selectinload(AppointmentsModel.medical_record)
-        )
-    )
-    
-    result = await db.execute(stmt)
-    animal = result.scalars().first()
-    
-    if not animal:
-        raise HTTPException(status_code=404, detail="Animal not found")
-    
-    return animal
-        
+@router.get(
+    "/{id}/history", status_code=status.HTTP_200_OK, response_model=AnimalHistorySchema
+)
+async def get_animal_history(
+    id: int, db: AsyncSession = Depends(get_session), user=Depends(get_current_user)
+):
+
+    animal_service = AnimalsService(db)
+
+    return await animal_service.get_animal_history(id)
