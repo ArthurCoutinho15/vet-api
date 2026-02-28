@@ -25,3 +25,12 @@ class UserCreateSchema(BaseModel):
     email: EmailStr
     password: str
     role: RoleEnum
+    
+class UserUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    role: Optional[RoleEnum] = None
+
+class UserPatchActive(BaseModel):
+    is_active: bool 

@@ -35,7 +35,7 @@ async def authenticate_user(
         return user
 
 
-def __create_token(token_type: str, lifetime: timedelta, sub: str) -> str:
+def _create_token(token_type: str, lifetime: timedelta, sub: str) -> str:
     payload = {}
     sp = timezone("America/Sao_Paulo")
     expires = datetime.now(tz=sp) + lifetime
@@ -48,8 +48,8 @@ def __create_token(token_type: str, lifetime: timedelta, sub: str) -> str:
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.ALGORITHM)
 
 
-def __create_access_token(sub: str) -> str:
-    return __create_token(
+def _create_access_token(sub: str) -> str:
+    return _create_token(
         token_type="access_token",
         lifetime=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
         sub=sub,

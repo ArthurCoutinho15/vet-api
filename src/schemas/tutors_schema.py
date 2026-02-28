@@ -3,27 +3,30 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
 from src.schemas.animals_schema import AnimalOut
+
+
 class TutorsSchema(BaseModel):
     id: Optional[int] = None
-    name: str 
-    cpf: str 
+    name: str
+    cpf: str
     email: EmailStr
     phone: str
     address: str
-    created_at: datetime = datetime.now()
-    
+
     class Config:
         orm_mode = True
+
 
 class TutorUpdateSchema(BaseModel):
     name: Optional[str] = None
     cpf: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    
+
     class Config:
         orm_mode = True
+
 
 class TutorWithAnimals(BaseModel):
     id: int
